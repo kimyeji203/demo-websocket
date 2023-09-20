@@ -6,15 +6,24 @@
           integrity="sha384-aFq/bzH65dt+w6FI2ooMVUpc+21e0SRygnTpmBvdBgSdnuTN7QbdgL+OapgHtvPp" crossorigin="anonymous">
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
 </head>
 
 <script>
+    const roomId = "${room.roomId}";
+    const roomName = "${room.roomName}";
+
+    let name = null;
     let websocket = null;
+    let stomp = null;
 
     // mapping event ------------------------------
     $(document).ready(function () {
 
         // init
+        checkRoom();
+
+
         $("#name").attr("disabled", false);
         $("#button-open").text("입장");
         $("#div-send").hide();
@@ -29,29 +38,49 @@
         $("#button-open").on("click", (e) => {
             if (websocket == null) {
 
-                const name = $("#name").val();
+                name = $("#name").val();
                 if (name == null) {
                     alert("이름을 먼저 입력해주세요~");
                     return;
                 }
 
-                // websocket = new WebSocket("ws://localhost:8080/simpleChat?name=" + name);
-                websocket = new SockJS("/simpleChat?name=" + name,
-                    null,
-                    {
-                        transports: ["websocket", "xhr-streaming", "xhr-polling"]
-                    });
-                websocket.onmessage = onMessage;
-                websocket.onopen = onOpen;
-                websocket.onclose = onClose;
+                connection();
             } else {
-                websocket.close();
+                name = null;
+                disconnect();
             }
         });
     });
 
 
     // function ------------------------------------
+
+    function checkRoom()
+    {
+        $.ajax({
+            url: "/room/"+roomId,
+            type: "get",
+            data: name,
+            contentType: "application/json; charset=utf-8"
+        }).then(response => {
+        });
+    }
+
+    function connection() {
+        // websocket = new WebSocket("ws://localhost:8080/simpleChat?name=" + name);
+        websocket = new SockJS("/stomp/simpleChat",
+            null,
+            {
+                transports: ["websocket", "xhr-streaming", "xhr-polling"]
+            });
+        stomp = Stomp.over(websocket);
+        stomp.connect({}, onOpen);
+    }
+
+    function disconnect() {
+        send("CLOSE");
+        websocket.close();
+    }
 
     // 웹소켓 메시지 전송
     function send(type) {
@@ -60,27 +89,32 @@
             return;
         }
 
-        let msg = document.getElementById("msg");
+        let msg = $("#msg").val();
         const payload = {
+            roomId: roomId,
             type: type,
-            context: msg.value
+            context: msg,
+            writerName : name
         };
 
-        websocket.send(JSON.stringify(payload));
-        msg.value = '';
+        stomp.send('/pub/chat/message', {}, JSON.stringify(payload));
+        $('#msg').val('');
     }
 
     // 입장
     function onOpen(evt) {
-        send("OPEN");
-
         $("#name").attr("disabled", true);
         $("#button-open").text("퇴장");
         $("#div-send").show();
+
+        stomp.subscribe("/sub/chat/room/" + roomId, onMessage);
+        send('OPEN');
     }
 
     // 퇴장
     function onClose(evt) {
+        send('CLOSE');
+
         websocket = null;
 
         $("#name").attr("disabled", false);
@@ -90,8 +124,7 @@
 
     // 메시지 수신
     function onMessage(msg) {
-
-        const jsonMsg = JSON.parse(msg.data);
+        const jsonMsg = JSON.parse(msg.body);
         const type = jsonMsg.type;
         const message = jsonMsg.context;
         const isMine = jsonMsg.isMine;
@@ -99,11 +132,11 @@
         let divClass;
         let divStyle;
 
-
+        console.log(jsonMsg);
         if (type === "TEXT" && isMine) {
             divClass = 'col-6 alert alert-warning';
             divStyle = 'margin-left:50%';
-        } else if (type === "TEXT" && isMine === false) {
+        } else if (type === "TEXT" && !isMine) {
             divClass = 'col-6 alert alert-primary';
             divStyle = 'right-left:50%';
         } else {
@@ -111,7 +144,6 @@
             divStyle = 'text-align:center; color:darkgray;';
         }
 
-        // 내가 보낸 채팅
         let html = `
             <div class='col-12'>
                 <div class='` + divClass + `' style='` + divStyle + `'>
@@ -126,7 +158,7 @@
 <body>
 <div class="container">
     <div class="col-12" style="text-align: center;">
-        <h3><b>채팅방</b></h3>
+        <h3><b>${room.roomName} 채팅방</b></h3>
     </div>
     <div class="col-12">
         <div class="input-group mb-3">

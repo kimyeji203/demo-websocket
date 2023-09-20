@@ -77,7 +77,7 @@ public class SimpleTextWebSocketHandler extends TextWebSocketHandler
     {
         for (Entry e : SESSION_MAP.entrySet())
         {
-            simpleMessage.setIsMine(e.getKey().equals(simpleMessage.getWriter()));
+            simpleMessage.setIsMine(e.getKey().equals(simpleMessage.getWriterKey()));
             ((WebSocketSession) e.getValue()).sendMessage(new TextMessage(JsonUtil.parseJsonObject(simpleMessage)));
         }
     }
@@ -121,13 +121,13 @@ public class SimpleTextWebSocketHandler extends TextWebSocketHandler
         }
         String context = switch (simpleMessage.getType())
             {
-                case OPEN -> StringUtils.join("[" + this.getName(session), "] 님 입장 (총 ", SESSION_MAP.size(), "명)");
+                case OPEN -> StringUtils.join("" + this.getName(session), " 님 입장 (총 ", SESSION_MAP.size(), "명)");
                 case TEXT -> StringUtils.isBlank(simpleMessage.getContext()) ?
                     StringUtils.EMPTY :
                     StringUtils.join("[" + this.getName(session), "] ", simpleMessage.getContext());
                 default -> simpleMessage.getType().name();
             };
-        simpleMessage.setWriter(key);
+        simpleMessage.setWriterKey(key);
         simpleMessage.setContext(context);
 
         /*
@@ -153,7 +153,7 @@ public class SimpleTextWebSocketHandler extends TextWebSocketHandler
 
         SimpleMessage simpleMessage = new SimpleMessage();
         simpleMessage.setType(MESSAGE_TYPES.CLOSE);
-        simpleMessage.setWriter(key);
+        simpleMessage.setWriterKey(key);
         simpleMessage.setContext(StringUtils.join(this.getName(session), " 님 퇴장 (총 ", SESSION_MAP.size(), "명)"));
         this.broadcastMessage(simpleMessage);
 

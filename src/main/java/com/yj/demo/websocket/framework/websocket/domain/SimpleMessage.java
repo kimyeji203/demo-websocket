@@ -12,5 +12,5 @@ public class SimpleMessage
     private String context;
 
     @JsonIgnore
-    private String writer;
+    private String writerKey;
 }

@@ -23,7 +23,9 @@ public class WebSocketConfig implements WebSocketConfigurer
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry)
     {
         registry.addHandler(simpleTextWebSocketHandler, "/simpleChat")
-            // .setAllowedOrigins("*") // default :same origin
-            .withSockJS();
+            // .setAllowedOrigins("*") // default : same origin
+            .withSockJS()
+            .setDisconnectDelay(60 * 1000) // default : 5sec
+        ;
     }
 }
