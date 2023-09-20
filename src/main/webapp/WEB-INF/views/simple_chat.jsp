@@ -5,6 +5,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha2/dist/css/bootstrap.min.css" rel="stylesheet"
           integrity="sha384-aFq/bzH65dt+w6FI2ooMVUpc+21e0SRygnTpmBvdBgSdnuTN7QbdgL+OapgHtvPp" crossorigin="anonymous">
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
 </head>
 
 <script>
@@ -27,7 +28,19 @@
         // 입장 or 퇴장
         $("#button-open").on("click", (e) => {
             if (websocket == null) {
-                websocket = new WebSocket("ws://localhost:8080/simpleChat?name=" + $("#name").val());
+
+                const name = $("#name").val();
+                if (name == null) {
+                    alert("이름을 먼저 입력해주세요~");
+                    return;
+                }
+
+                // websocket = new WebSocket("ws://localhost:8080/simpleChat?name=" + name);
+                websocket = new SockJS("/simpleChat?name=" + name,
+                    null,
+                    {
+                        transports: ["websocket", "xhr-streaming", "xhr-polling"]
+                    });
                 websocket.onmessage = onMessage;
                 websocket.onopen = onOpen;
                 websocket.onclose = onClose;
@@ -88,10 +101,10 @@
 
 
         if (type === "TEXT" && isMine) {
-            divClass = 'col-6 alert-warning';
+            divClass = 'col-6 alert alert-warning';
             divStyle = 'margin-left:50%';
         } else if (type === "TEXT" && isMine === false) {
-            divClass = 'col-6 alert-primary';
+            divClass = 'col-6 alert alert-primary';
             divStyle = 'right-left:50%';
         } else {
             divClass = 'col-12';
@@ -101,7 +114,7 @@
         // 내가 보낸 채팅
         let html = `
             <div class='col-12'>
-                <div class='alert ` + divClass + `' style='` + divStyle + `'>
+                <div class='` + divClass + `' style='` + divStyle + `'>
                     <b>` + message + `</b>
                 </div>
             </div>
@@ -129,7 +142,8 @@
         </div>
         <div class="col-12" id="div-send">
             <div class="input-group mb-3">
-                <input type="text" id="msg" class="form-control" placeholder="Enter message" style="margin-right: 10px;">
+                <input type="text" id="msg" class="form-control" placeholder="Enter message"
+                       style="margin-right: 10px;">
                 <div class="input-group-append">
                     <button class="btn btn-warning" type="button" id="button-send">전송</button>
                 </div>

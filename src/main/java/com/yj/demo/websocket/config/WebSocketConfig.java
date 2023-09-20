@@ -22,6 +22,8 @@ public class WebSocketConfig implements WebSocketConfigurer
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry)
     {
-        registry.addHandler(simpleTextWebSocketHandler, "/simpleChat").setAllowedOrigins("*");
+        registry.addHandler(simpleTextWebSocketHandler, "/simpleChat")
+            // .setAllowedOrigins("*") // default :same origin
+            .withSockJS();
     }
 }
