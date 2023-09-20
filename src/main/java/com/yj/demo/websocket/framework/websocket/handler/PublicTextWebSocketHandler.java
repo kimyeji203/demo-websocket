@@ -1,7 +1,7 @@
 package com.yj.demo.websocket.framework.websocket.handler;
 
 import com.yj.demo.websocket.framework.utils.JsonUtil;
-import com.yj.demo.websocket.framework.websocket.domain.SimpleMessage;
+import com.yj.demo.websocket.domain.SocketMessage;
 import com.yj.demo.websocket.framework.websocket.WebSocketConst.MESSAGE_TYPES;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
@@ -24,7 +24,7 @@ import org.springframework.web.socket.handler.TextWebSocketHandler;
 @Slf4j
 @Configuration
 @RequiredArgsConstructor
-public class SimpleTextWebSocketHandler extends TextWebSocketHandler
+public class PublicTextWebSocketHandler extends TextWebSocketHandler
 {
     private final static Map<String, WebSocketSession> SESSION_MAP = new HashMap<>();
 
@@ -70,15 +70,15 @@ public class SimpleTextWebSocketHandler extends TextWebSocketHandler
     /**
      * 전체 세션에 메지시 전파
      *
-     * @param simpleMessage
+     * @param socketMessage
      * @throws Exception
      */
-    private void broadcastMessage(SimpleMessage simpleMessage) throws Exception
+    private void broadcastMessage(SocketMessage socketMessage) throws Exception
     {
         for (Entry e : SESSION_MAP.entrySet())
         {
-            simpleMessage.setIsMine(e.getKey().equals(simpleMessage.getWriterKey()));
-            ((WebSocketSession) e.getValue()).sendMessage(new TextMessage(JsonUtil.parseJsonObject(simpleMessage)));
+            socketMessage.setIsMine(e.getKey().equals(socketMessage.getWriterKey()));
+            ((WebSocketSession) e.getValue()).sendMessage(new TextMessage(JsonUtil.parseJsonObject(socketMessage)));
         }
     }
 
@@ -114,28 +114,28 @@ public class SimpleTextWebSocketHandler extends TextWebSocketHandler
         /*
          * 메시지 분류
          */
-        SimpleMessage simpleMessage = JsonUtil.parseString(payload, SimpleMessage.class);
-        if (simpleMessage.getType() == null)
+        SocketMessage socketMessage = JsonUtil.parseString(payload, SocketMessage.class);
+        if (socketMessage.getType() == null)
         {
             throw new RuntimeException("type 없음.");
         }
-        String context = switch (simpleMessage.getType())
+        String context = switch (socketMessage.getType())
             {
                 case OPEN -> StringUtils.join("" + this.getName(session), " 님 입장 (총 ", SESSION_MAP.size(), "명)");
-                case TEXT -> StringUtils.isBlank(simpleMessage.getContext()) ?
+                case TEXT -> StringUtils.isBlank(socketMessage.getContext()) ?
                     StringUtils.EMPTY :
-                    StringUtils.join("[" + this.getName(session), "] ", simpleMessage.getContext());
-                default -> simpleMessage.getType().name();
+                    StringUtils.join("[" + this.getName(session), "] ", socketMessage.getContext());
+                default -> socketMessage.getType().name();
             };
-        simpleMessage.setWriterKey(key);
-        simpleMessage.setContext(context);
+        socketMessage.setWriterKey(key);
+        socketMessage.setContext(context);
 
         /*
          * 메시지 전파
          */
-        this.broadcastMessage(simpleMessage);
+        this.broadcastMessage(socketMessage);
 
-        log.info(LOG_INFO_FORMAT, StringUtils.join("Send message payload >>> ", simpleMessage), key);
+        log.info(LOG_INFO_FORMAT, StringUtils.join("Send message payload >>> ", socketMessage), key);
     }
 
     /**
@@ -151,11 +151,11 @@ public class SimpleTextWebSocketHandler extends TextWebSocketHandler
         String key = this.getSessionId(session);
         SESSION_MAP.remove(key);
 
-        SimpleMessage simpleMessage = new SimpleMessage();
-        simpleMessage.setType(MESSAGE_TYPES.CLOSE);
-        simpleMessage.setWriterKey(key);
-        simpleMessage.setContext(StringUtils.join(this.getName(session), " 님 퇴장 (총 ", SESSION_MAP.size(), "명)"));
-        this.broadcastMessage(simpleMessage);
+        SocketMessage socketMessage = new SocketMessage();
+        socketMessage.setType(MESSAGE_TYPES.CLOSE);
+        socketMessage.setWriterKey(key);
+        socketMessage.setContext(StringUtils.join(this.getName(session), " 님 퇴장 (총 ", SESSION_MAP.size(), "명)"));
+        this.broadcastMessage(socketMessage);
 
         log.info(LOG_INFO_FORMAT, "Client connection closed", key);
     }

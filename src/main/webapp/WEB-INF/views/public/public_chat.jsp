@@ -10,16 +10,17 @@
 
 <script>
     let websocket = null;
+    let name = null;
 
-    // mapping event ------------------------------
     $(document).ready(function () {
 
-        // init
+        // init ui --------------------------------
         $("#name").attr("disabled", false);
         $("#button-open").text("입장");
         $("#div-send").hide();
 
 
+        // mapping event --------------------------
         // 메시지 전송
         $("#button-send").on("click", (e) => {
             send("TEXT");
@@ -29,7 +30,7 @@
         $("#button-open").on("click", (e) => {
             if (websocket == null) {
 
-                const name = $("#name").val();
+                name = $("#name").val();
                 if (name == null) {
                     alert("이름을 먼저 입력해주세요~");
                     return;
@@ -47,8 +48,8 @@
 
     function connection()
     {
-        // websocket = new WebSocket("ws://localhost:8080/simpleChat?name=" + name);
-        websocket = new SockJS("/simpleChat?name=" + name,
+        // websocket = new WebSocket("ws://localhost:8080/publicChat?name=" + name);
+        websocket = new SockJS("/publicChat?name=" + name,
             null,
             {
                 transports: ["websocket", "xhr-streaming", "xhr-polling"]
@@ -61,6 +62,7 @@
     function disconnect()
     {
         websocket.close();
+        onClose(null);
     }
 
     // 웹소켓 메시지 전송

@@ -1,27 +1,28 @@
 package com.yj.demo.websocket.framework.websocket.handler;
 
-import com.yj.demo.websocket.framework.websocket.domain.StompRoom;
+import com.yj.demo.websocket.domain.Room;
+
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Repository;
 
-@Component
-public class StompRoomHandler
+@Repository
+public class PrivateRoomHandler
 {
-    private final Map<String, StompRoom> ROOM_MAP = new LinkedHashMap<>();
-    private final Map<String, Map<String, SimpMessageHeaderAccessor>> ROOM_SESSION_MAP = new LinkedHashMap<>();
+    private final Map<String, Room> ROOM_MAP = new LinkedHashMap<>();
 
     /**
      * 채팅방 전체 목록 조회
      *
      * @return
      */
-    public List<StompRoom> findAllRooms()
+    public List<Room> findAllRooms ()
     {
         return ROOM_MAP.values().stream().toList();
     }
@@ -32,7 +33,7 @@ public class StompRoomHandler
      * @param id
      * @return
      */
-    public StompRoom findRoomById(String id)
+    public Room findRoomById (String id)
     {
         if (StringUtils.isBlank(id))
         {
@@ -48,7 +49,7 @@ public class StompRoomHandler
      * @param name
      * @return
      */
-    public StompRoom createRoomReturn(String name)
+    public Room createRoomReturn (String name)
     {
         if (StringUtils.isBlank(name))
         {
@@ -56,7 +57,7 @@ public class StompRoomHandler
             name = simpleDateFormat.format(new Date());
         }
 
-        StompRoom simpleRoom = new StompRoom(name);
+        Room simpleRoom = new Room(name);
         ROOM_MAP.put(simpleRoom.getRoomId(), simpleRoom);
         return simpleRoom;
     }
@@ -66,7 +67,7 @@ public class StompRoomHandler
      *
      * @param roomId
      */
-    public StompRoom removeRoomReturn(String roomId)
+    public Room removeRoomReturn (String roomId)
     {
         return ROOM_MAP.remove(roomId);
     }
@@ -77,14 +78,14 @@ public class StompRoomHandler
      * @param roomId
      * @return
      */
-    public int getSessionCntByRoomId(String roomId)
+    public int getSessionCntByRoomId (String roomId)
     {
-        if (!ROOM_SESSION_MAP.containsKey(roomId))
+        if (!ROOM_MAP.containsKey(roomId))
         {
             return 0;
         }
 
-        Map<String, SimpMessageHeaderAccessor> sessions = ROOM_SESSION_MAP.get(roomId);
+        Map<String, SimpMessageHeaderAccessor> sessions = ROOM_MAP.get(roomId).getSessionMap();
         return sessions.isEmpty() ? 0 : sessions.size();
     }
 
@@ -94,9 +95,14 @@ public class StompRoomHandler
      * @param roomId
      * @param session
      */
-    public void addSessionByRoomId(String roomId, SimpMessageHeaderAccessor session)
+    public void addSessionByRoomId (String roomId, SimpMessageHeaderAccessor session)
     {
-        Map<String, SimpMessageHeaderAccessor> sessions = ROOM_SESSION_MAP.get(roomId);
+        if (!ROOM_MAP.containsKey(roomId))
+        {
+            throw new RuntimeException("No exist room. " + roomId);
+        }
+
+        Map<String, SimpMessageHeaderAccessor> sessions = ROOM_MAP.get(roomId).getSessionMap();
         if (sessions == null || sessions.isEmpty())
         {
             sessions = new LinkedHashMap<>();
@@ -104,13 +110,13 @@ public class StompRoomHandler
         sessions.put(session.getSessionId(), session);
     }
 
-    public void removeSessionByRoomId(String roomId, SimpMessageHeaderAccessor session)
+    public void removeSessionByRoomId (String roomId, SimpMessageHeaderAccessor session)
     {
-        if (!ROOM_SESSION_MAP.containsKey(roomId))
+        if (!ROOM_MAP.containsKey(roomId))
         {
             return;
         }
 
-        ROOM_SESSION_MAP.get(roomId).remove(session.getSessionId());
+        ROOM_MAP.get(roomId).getSessionMap().remove(session.getSessionId());
     }
 }

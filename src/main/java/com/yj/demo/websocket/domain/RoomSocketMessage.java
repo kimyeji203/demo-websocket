@@ -1,11 +1,11 @@
-package com.yj.demo.websocket.framework.websocket.domain;
+package com.yj.demo.websocket.domain;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
-public class StompMessage extends SimpleMessage
+public class RoomSocketMessage extends SocketMessage
 {
     private String roomId;
     private String writerName;

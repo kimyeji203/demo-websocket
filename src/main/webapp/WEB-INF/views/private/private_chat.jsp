@@ -17,18 +17,17 @@
     let websocket = null;
     let stomp = null;
 
-    // mapping event ------------------------------
     $(document).ready(function () {
 
-        // init
+        // init ui --------------------------------
         checkRoom();
-
 
         $("#name").attr("disabled", false);
         $("#button-open").text("입장");
         $("#div-send").hide();
 
 
+        // mapping event --------------------------
         // 메시지 전송
         $("#button-send").on("click", (e) => {
             send("TEXT");
@@ -46,7 +45,6 @@
 
                 connection();
             } else {
-                name = null;
                 disconnect();
             }
         });
@@ -55,20 +53,26 @@
 
     // function ------------------------------------
 
-    function checkRoom()
-    {
-        $.ajax({
-            url: "/room/"+roomId,
-            type: "get",
-            data: name,
-            contentType: "application/json; charset=utf-8"
-        }).then(response => {
-        });
+    function checkRoom() {
+        if (!roomId) {
+            location.href = "/private/room";
+        } else {
+            $.ajax({
+                url: "/room/" + roomId,
+                type: "get",
+                data: name,
+                contentType: "application/json; charset=utf-8"
+            }).then(response => {
+                if (response == null) {
+                    location.href = "/private/room";
+                }
+            });
+        }
     }
 
     function connection() {
-        // websocket = new WebSocket("ws://localhost:8080/simpleChat?name=" + name);
-        websocket = new SockJS("/stomp/simpleChat",
+        // websocket = new WebSocket("ws://localhost:8080/publicChat?name=" + name);
+        websocket = new SockJS("/stomp/privateChat",
             null,
             {
                 transports: ["websocket", "xhr-streaming", "xhr-polling"]
@@ -79,7 +83,10 @@
 
     function disconnect() {
         send("CLOSE");
+
         websocket.close();
+        websocket = null;
+        stomp = null;
     }
 
     // 웹소켓 메시지 전송
@@ -94,10 +101,10 @@
             roomId: roomId,
             type: type,
             context: msg,
-            writerName : name
+            writerName: name
         };
 
-        stomp.send('/pub/chat/message', {}, JSON.stringify(payload));
+        stomp.send('/pub/private/chat/message', {}, JSON.stringify(payload));
         $('#msg').val('');
     }
 
@@ -107,7 +114,7 @@
         $("#button-open").text("퇴장");
         $("#div-send").show();
 
-        stomp.subscribe("/sub/chat/room/" + roomId, onMessage);
+        stomp.subscribe("/sub/private/chat/room/" + roomId, onMessage);
         send('OPEN');
     }
 
@@ -132,7 +139,6 @@
         let divClass;
         let divStyle;
 
-        console.log(jsonMsg);
         if (type === "TEXT" && isMine) {
             divClass = 'col-6 alert alert-warning';
             divStyle = 'margin-left:50%';

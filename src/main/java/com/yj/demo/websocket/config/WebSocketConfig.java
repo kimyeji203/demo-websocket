@@ -1,6 +1,6 @@
 package com.yj.demo.websocket.config;
 
-import com.yj.demo.websocket.framework.websocket.handler.SimpleTextWebSocketHandler;
+import com.yj.demo.websocket.framework.websocket.handler.PublicTextWebSocketHandler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.socket.config.annotation.EnableWebSocket;
@@ -17,12 +17,12 @@ import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry
 @RequiredArgsConstructor
 public class WebSocketConfig implements WebSocketConfigurer
 {
-    private final SimpleTextWebSocketHandler simpleTextWebSocketHandler;
+    private final PublicTextWebSocketHandler publicTextWebSocketHandler;
 
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry)
     {
-        registry.addHandler(simpleTextWebSocketHandler, "/simpleChat")
+        registry.addHandler(publicTextWebSocketHandler, "/publicChat")
             // .setAllowedOrigins("*") // default : same origin
             .withSockJS()
             .setDisconnectDelay(60 * 1000) // default : 5sec
