@@ -2,6 +2,7 @@ package com.yj.demo.websocket.framework.websocket.handler;
 
 import com.yj.demo.websocket.framework.utils.JsonUtil;
 import com.yj.demo.websocket.domain.SocketMessage;
+import com.yj.demo.websocket.framework.websocket.WebSocketConst;
 import com.yj.demo.websocket.framework.websocket.WebSocketConst.MESSAGE_TYPES;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
@@ -21,6 +22,9 @@ import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
+/**
+ * 공용 채팅 웹소켓 핸들러
+ */
 @Slf4j
 @Configuration
 @RequiredArgsConstructor
@@ -28,7 +32,6 @@ public class PublicTextWebSocketHandler extends TextWebSocketHandler
 {
     private final static Map<String, WebSocketSession> SESSION_MAP = new HashMap<>();
 
-    private final static String NAME = "name";
     private final static String LOG_INFO_FORMAT = "[WebSocket Handler] >>> {} : Session ID is {}";
 
     /**
@@ -59,7 +62,7 @@ public class PublicTextWebSocketHandler extends TextWebSocketHandler
             URLEncodedUtils.parse(Objects.requireNonNull(session.getUri()), StandardCharsets.UTF_8);
         for (NameValuePair nv : params)
         {
-            if (nv.getName().equals(NAME))
+            if (nv.getName().equals(WebSocketConst.SESSION_ATTR_NAME))
             {
                 return nv.getValue();
             }

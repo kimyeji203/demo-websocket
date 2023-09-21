@@ -12,6 +12,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 import org.springframework.stereotype.Repository;
 
+/**
+ * 프라이빗 채팅룸 핸들러
+ */
 @Repository
 public class PrivateRoomHandler
 {
@@ -22,7 +25,7 @@ public class PrivateRoomHandler
      *
      * @return
      */
-    public List<Room> findAllRooms ()
+    public List<Room> findAllRooms()
     {
         return ROOM_MAP.values().stream().toList();
     }
@@ -33,7 +36,7 @@ public class PrivateRoomHandler
      * @param id
      * @return
      */
-    public Room findRoomById (String id)
+    public Room findRoomById(String id)
     {
         if (StringUtils.isBlank(id))
         {
@@ -49,7 +52,7 @@ public class PrivateRoomHandler
      * @param name
      * @return
      */
-    public Room createRoomReturn (String name)
+    public Room createRoomReturn(String name)
     {
         if (StringUtils.isBlank(name))
         {
@@ -67,7 +70,7 @@ public class PrivateRoomHandler
      *
      * @param roomId
      */
-    public Room removeRoomReturn (String roomId)
+    public Room removeRoomReturn(String roomId)
     {
         return ROOM_MAP.remove(roomId);
     }
@@ -78,7 +81,7 @@ public class PrivateRoomHandler
      * @param roomId
      * @return
      */
-    public int getSessionCntByRoomId (String roomId)
+    public int getSessionCntByRoomId(String roomId)
     {
         if (!ROOM_MAP.containsKey(roomId))
         {
@@ -95,28 +98,23 @@ public class PrivateRoomHandler
      * @param roomId
      * @param session
      */
-    public void addSessionByRoomId (String roomId, SimpMessageHeaderAccessor session)
+    public void addSessionByRoomId(String roomId, SimpMessageHeaderAccessor session)
     {
         if (!ROOM_MAP.containsKey(roomId))
         {
             throw new RuntimeException("No exist room. " + roomId);
         }
 
-        Map<String, SimpMessageHeaderAccessor> sessions = ROOM_MAP.get(roomId).getSessionMap();
-        if (sessions == null || sessions.isEmpty())
-        {
-            sessions = new LinkedHashMap<>();
-        }
-        sessions.put(session.getSessionId(), session);
+        ROOM_MAP.get(roomId).putSession(session);
     }
 
-    public void removeSessionByRoomId (String roomId, SimpMessageHeaderAccessor session)
+    public void removeSessionByRoomId(String roomId, SimpMessageHeaderAccessor session)
     {
         if (!ROOM_MAP.containsKey(roomId))
         {
             return;
         }
 
-        ROOM_MAP.get(roomId).getSessionMap().remove(session.getSessionId());
+        ROOM_MAP.get(roomId).removeSession(session);
     }
 }

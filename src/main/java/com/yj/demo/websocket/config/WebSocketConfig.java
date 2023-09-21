@@ -22,10 +22,13 @@ public class WebSocketConfig implements WebSocketConfigurer
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry)
     {
+        //@formatter:off
         registry.addHandler(publicTextWebSocketHandler, "/publicChat")
             // .setAllowedOrigins("*") // default : same origin
+            .setAllowedOriginPatterns("*")
             .withSockJS()
             .setDisconnectDelay(60 * 1000) // default : 5sec
         ;
+        //@formatter:on
     }
 }

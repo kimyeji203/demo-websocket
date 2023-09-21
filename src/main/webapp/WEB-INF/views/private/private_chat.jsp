@@ -53,6 +53,17 @@
 
     // function ------------------------------------
 
+    function equlWriterKey(writerKey) {
+        if(websocket == null)
+        {
+            return false;
+        }
+
+        let list = websocket._transport.url.split('/')
+        let sessionId = list[list.length - 2];
+        return sessionId === writerKey;
+    }
+
     function checkRoom() {
         if (!roomId) {
             location.href = "/private/room";
@@ -70,9 +81,10 @@
         }
     }
 
+    // 소켓 연결 (입장)
     function connection() {
         // websocket = new WebSocket("ws://localhost:8080/publicChat?name=" + name);
-        websocket = new SockJS("/stomp/privateChat",
+        websocket = new SockJS("/stomp/privateChat?name=" + name,
             null,
             {
                 transports: ["websocket", "xhr-streaming", "xhr-polling"]
@@ -81,20 +93,36 @@
         stomp.connect({}, onOpen);
     }
 
+    // 소켓 연결 해제 (퇴장)
     function disconnect() {
         send("CLOSE");
 
         websocket.close();
         websocket = null;
         stomp = null;
+
+        $("#name").attr("disabled", false);
+        $("#button-open").text("입장");
+        $("#div-send").hide();
     }
+
+    // 입장
+    function onOpen(evt) {
+        $("#name").attr("disabled", true);
+        $("#button-open").text("퇴장");
+        $("#div-send").show();
+
+        stomp.subscribe("/sub/private/chat/room/" + roomId, onMessage);
+        send('OPEN');
+    }
+
 
     // 웹소켓 메시지 전송
     function send(type) {
-        if (websocket == null) {
-            window.alert("채팅방 입장 먼저 해주세요~");
-            return;
-        }
+        // if (websocket == null) {
+        //     window.alert("채팅방 입장 먼저 해주세요~");
+        //     return;
+        // }
 
         let msg = $("#msg").val();
         const payload = {
@@ -108,33 +136,12 @@
         $('#msg').val('');
     }
 
-    // 입장
-    function onOpen(evt) {
-        $("#name").attr("disabled", true);
-        $("#button-open").text("퇴장");
-        $("#div-send").show();
-
-        stomp.subscribe("/sub/private/chat/room/" + roomId, onMessage);
-        send('OPEN');
-    }
-
-    // 퇴장
-    function onClose(evt) {
-        send('CLOSE');
-
-        websocket = null;
-
-        $("#name").attr("disabled", false);
-        $("#button-open").text("입장");
-        $("#div-send").hide();
-    }
-
     // 메시지 수신
     function onMessage(msg) {
         const jsonMsg = JSON.parse(msg.body);
         const type = jsonMsg.type;
         const message = jsonMsg.context;
-        const isMine = jsonMsg.isMine;
+        const isMine = equlWriterKey(jsonMsg.writerKey);
 
         let divClass;
         let divStyle;

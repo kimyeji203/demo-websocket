@@ -8,6 +8,10 @@ import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBr
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
 
+/**
+ * Stomp 프로토콜 기반 웹소켓 설정
+ * {@link WebSocketMessageBrokerConfigurer} 브로커 사용
+ */
 @Configuration
 @RequiredArgsConstructor
 @EnableWebSocketMessageBroker
@@ -18,14 +22,16 @@ public class StompSocketConfig implements WebSocketMessageBrokerConfigurer
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry)
     {
+        //@formatter:off
         registry.addEndpoint("/stomp/privateChat")
-                .addInterceptors(stompSocketInterceptor)
+            .addInterceptors(stompSocketInterceptor)
             // .setAllowedOrigins("*") // default : same origin
+            .setAllowedOriginPatterns("*")
             .withSockJS()
             .setDisconnectDelay(60 * 1000) // default : 5sec
         ;
+        //@formatter:on
     }
-
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry registry)

@@ -7,6 +7,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.ModelAndView;
 
+/**
+ * 프라이빗 채팅 View  컨트롤러
+ */
 @Controller
 @RequiredArgsConstructor
 public class PrivateChatViewsController
